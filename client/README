@@ -1,0 +1,19 @@
+To build the program simply run either 
+
+make windows
+
+or
+
+make nix
+
+
+depending on your OS.
+
+
+I designed the windows version to be made in cygwin just because it is most similar to what I am used to. 
+
+I did notice when I tried to make it on ubuntu, I had to install the dev version of the ncurses library. The following command should do the trick.
+
+sudo apt-get install libncurses5-dev
+
+There are about a millon ways you can tweak the movement depending on the vehicle setup you have.The script for the car is set up to receive letters b-z as various speeds between slow and full throttle. Capital letters indicate forward and lowercase letters indicate reverse. 
