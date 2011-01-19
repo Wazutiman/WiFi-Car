@@ -10,6 +10,8 @@
  *	to move and stop. press escape or 'q' to exit the program.
  *
  */
+
+
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <ncurses.h>
