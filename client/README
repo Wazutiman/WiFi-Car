@@ -1,14 +1,12 @@
 To build the program simply run either 
 
+make
+
+or for cygwin use:
+
 make windows
 
-or
-
-make nix
-
-
-depending on your OS.
-
+:Wq
 
 I designed the windows version to be made in cygwin just because it is most similar to what I am used to. 
 
