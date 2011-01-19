@@ -1,6 +1,15 @@
-// client.c
-// A stream socket client demo
-
+/*
+ *	client.c
+ *	
+ * 	By Shawn Dooley
+ *
+ *
+ *
+ *	This program is designed to serve as the control input for a
+ *	arduino controlled toy car. It uses the arrow keys, and spacebar
+ *	to move and stop. press escape or 'q' to exit the program.
+ *
+ */
 #include <arpa/inet.h>
 #include <ctype.h>
 #include <ncurses.h>
@@ -10,81 +19,63 @@
 #include <string.h>
 #include <unistd.h>
 
-//Prototypes
-void adjust_motor_speed(int keypress);  //Obsolete, being removed.
-
-// Functions to determine vehicle behavior based on its current state.
-void stopped_keys(int keypress);
-void reverse_keys(int keypress);
-void forward_keys(int keypress);
-void opposite_direction_keys(int keypress);
+#include "client.h"
 
 
 
+//String that we send to the WiShield
+
+char buf[MAXDATASIZE];      
 
 
+//Storage for teh last info sent to the WiShield
 
-// Function to make the the vehicle turn in place by activating the motors
-// in opposite directions.
-
-
-
-#define PORT 1000    // the port WiShield is listening on
-#define REVERSE 32
-
-#define MAXDATASIZE 3   // max number of bytes we can get at once from WiShield
-
-					
-#define STEPSIZE 5		// A larger number here makes the car speed up faster
-						//Default is 5.
-
-
-
-	    char buf[MAXDATASIZE];      //String that we send to the WiShield
-		char lastSent[MAXDATASIZE];	//Storage for teh last info sent to the WiShield
-		char lmSpeed = 65;			
-		char rmSpeed = 65;
+char lastSent[MAXDATASIZE];	
+char lmSpeed = 65;			
+char rmSpeed = 65;
 		
-		// flags for the current car state.
-		bool moving = FALSE;
-		bool reversed = FALSE;
-		bool right_reversed = FALSE;
-		bool left_reversed = FALSE;
+
+// flags for the current car state.
+
+bool moving = FALSE;
+bool reversed = FALSE;
+bool right_reversed = FALSE;
+bool left_reversed = FALSE;
 
 
 int main( void )
 {
 		// Variables used for socket.	
 	int ch;
-    int sockfd;
-    struct sockaddr_in srv;
+    	int sockfd;
+    	struct sockaddr_in srv;
 	
 	
-    memset(&srv, 0, sizeof(srv));
+    	memset(&srv, 0, sizeof(srv));
 
-    // setup IP address of WiShield
-    srv.sin_family = AF_INET;
-    srv.sin_port = htons(PORT);
+    	// setup IP address of WiShield
+    	srv.sin_family = AF_INET;
+    	srv.sin_port = htons(PORT);
 /*******************Set target IP HERE! **************************/    
 	inet_pton(AF_INET, "192.168.1.10", &srv.sin_addr);
 
     // setup socket and connect
-    if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
-        perror("socket");
-        exit(0);
-    }
+    	if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+     	   perror("socket");
+     	   exit(0);
+    	}
 
-    if (connect(sockfd, (const void*)&srv, sizeof(srv)) == -1) {
-        close(sockfd);
-        perror("connect");
-        exit(0);
-    }
+    	if (connect(sockfd, (const void*)&srv, sizeof(srv)) == -1) {
+        	close(sockfd);
+        	perror("connect");
+        	exit(0);
+    	}
 
 		
 	//setup curses
 	initscr();
 	noecho();
-    keypad(stdscr, TRUE);
+    	keypad(stdscr, TRUE);
 
 	printw("connected to WiShield\n");
 		
@@ -120,7 +111,7 @@ int main( void )
 		
 			//Determine whick method to process the keys based on current state.
 		
-		if (ch == ' ')	
+		if (ch == ' ')	 // Check for a stop command first.
 		{
 			lmSpeed = 65;
 			rmSpeed = 65;
@@ -155,15 +146,21 @@ int main( void )
 			else
 			{
 
-					//store copy of last sent string to reduce overflow	from button mashing
+/*
+I store a copy of the last sent string in a variable named lastSent. 
+before sending the next string I compare the new string to this.
+If they match, I skip sending the new one.
+I found this fixed some of the delay that resulted from key mashing that 
+people are inclined to do
+*/
 				memcpy(lastSent, buf, MAXDATASIZE);
   			
 			}
 		}
  
 
- 		// Loop Until the escape key is pressed.  
-	} while(ch != 27  );  
+ 		// Loop Until the escape key  or 'Q' is pressed.  
+	} while(ch != 27 && ch != 'Q' );  
 
 		// Send one last string to stop the car.	  
 	if (send(sockfd, "AA\0" , MAXDATASIZE, 0) == -1) 
@@ -221,18 +218,7 @@ void stopped_keys(int keypress)
 		
 	}
 	
-	//Build string to send.
-	if(left_reversed)
-		buf[0] = lmSpeed + REVERSE;
-	else
-		buf[0] = lmSpeed;
-
-	if(right_reversed)
-		buf[1] = rmSpeed + REVERSE;
-	else
-		buf[1] = rmSpeed;
-	
-	buf[2] = '\0';
+	build_string();
 
 }
 
@@ -283,19 +269,10 @@ void reverse_keys(int keypress)
 		rmSpeed = 90;
 	
 
-	
-	//Build string to send.
-	if(left_reversed)
-		buf[0] = lmSpeed + REVERSE;
-	else
-		buf[0] = lmSpeed;
 
-	if(right_reversed)
-		buf[1] = rmSpeed + REVERSE;
-	else
-		buf[1] = rmSpeed;
+	build_string();
+
 	
-	buf[2] = '\0';
 
 
 }
@@ -339,18 +316,7 @@ void forward_keys(int keypress)
 	
 
 	
-	//Build string to send.
-	if(left_reversed)
-		buf[0] = lmSpeed + REVERSE;
-	else
-		buf[0] = lmSpeed;
-
-	if(right_reversed)
-		buf[1] = rmSpeed + REVERSE;
-	else
-		buf[1] = rmSpeed;
-	
-	buf[2] = '\0';
+	build_string();
 
 
 }
@@ -395,6 +361,14 @@ void opposite_direction_keys(int keypress)
 	
 
 	
+	build_string();
+
+}
+
+
+void build_string(void)
+{
+
 	//Build string to send.
 	if(left_reversed)
 		buf[0] = lmSpeed + REVERSE;
