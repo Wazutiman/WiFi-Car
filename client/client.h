@@ -1,21 +1,38 @@
+/*
+ *	Constants and prototypes used by client.c
+ *
+ *	by Shawn Dooley
+ *
+ *
+ */
 
 
 
+// the port WiShield is listening on
 
-#define PORT 1000    // the port WiShield is listening on
+#define PORT 1000 
+
+
+//A constant to distinguish between a forward and reverse motor command.
+
 #define REVERSE 32
 
-#define MAXDATASIZE 3   // max number of bytes we can get at once from WiShield
 
-					
-#define STEPSIZE 10	// A larger number here makes the car speed up faster
-						//Default is 10.
+// max number of bytes we can get at once from WiShield
+
+#define MAXDATASIZE 3   
 
 
+// A larger number here makes the car speed up faster. 
+//Default is 10.		
+
+#define STEPSIZE 10	
 
 
 
 //Prototypes
+
+
 void adjust_motor_speed(int keypress);  //Obsolete, being removed.
 
 /*

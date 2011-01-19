@@ -1,0 +1,10 @@
+This was initially a project for a programming class I took, last year.
+
+The vehicle that this was designed to control is a torque steer vehicle which means instead of having front wheels that turn, it changes direction by varying the speed of the wheels on the left side to the right side. Imagine the way a tank would turn...yeah, kinda like that. 
+
+The contents of the car directory are scripts for an arduino microcontroller with a Async-labs Wi-Shield attached. In it you can set your wireless settings. 
+
+In the client directory is a rather basic program written in C that is designed to be the client that connects to the arduino and sends it simple commands. I gave it an ncurses interface because it was the eaisest way for me to get single keypress input in C. There are a few hints on how to make that program in the README contained within the directory itself. But honestly, I have not studied up on making makefiles so there is a chance that it wont help you. 
+
+
+This project is currently a low priority to me but I will try to clean it up when I can.
