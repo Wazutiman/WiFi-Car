@@ -45,29 +45,72 @@ bool right_reversed = FALSE;
 bool left_reversed = FALSE;
 
 
-int main( void )
+int main( int argc, char *argv[])
 {
-		// Variables used for socket.	
-	int ch;
-    	int sockfd;
-    	struct sockaddr_in srv;
-	
-	
-    	memset(&srv, 0, sizeof(srv));
 
-    	// setup IP address of WiShield
-    	srv.sin_family = AF_INET;
-    	srv.sin_port = htons(PORT);
-/*******************Set target IP HERE! **************************/    
-	inet_pton(AF_INET, "192.168.1.10", &srv.sin_addr);
+	/**
+	Make the IP address string large enough to handle any 
+	standard IPv4 address.
+	set the standdard port to the one defined in the header
+	*/
+	
+	char ip_address[16];
+	int port = PORT;
+	
+	
+	//	Set the standard IP address to the one defined in the header.
+	
+	strcpy(ip_address, IP_ADDRESS);
+
+	/* Make sure there are the correct number of arguements*/
+	
+	if( argc > 3)
+	{	
+		error( "Wrong number of arguements.");
+
+		exit (2);
+		
+	}
+	if( argc > 1 && !validIP( argv[1])  )
+	{
+		error( "Invalid IP format.");
+		exit(3);
+	}
+	
+	
+	if(argc == 3 )
+	{
+		if( atoi(argv[2]) > 65535  || atoi(argv[2]) <= 0 )
+		{
+			error("Invalid port.");
+			exit(4);
+		}
+	}
+
+		// Variables used for socket.	
+		int ch;
+		int sockfd;
+		struct sockaddr_in srv;
+		
+		
+		memset(&srv, 0, sizeof(srv));
+
+		// setup IP address of WiShield
+		srv.sin_family = AF_INET;
+		srv.sin_port = htons(PORT);
+
+
+		inet_pton(AF_INET, ip_address, &srv.sin_addr);
 
     // setup socket and connect
-    	if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) {
+    	if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) 
+		{
      	   perror("socket");
      	   exit(0);
     	}
 
-    	if (connect(sockfd, (const void*)&srv, sizeof(srv)) == -1) {
+    	if (connect(sockfd, (const void*)&srv, sizeof(srv)) == -1) 
+		{
         	close(sockfd);
         	perror("connect");
         	exit(0);
@@ -98,13 +141,10 @@ int main( void )
 			moving = TRUE;
 		
 			if( left_reversed && right_reversed)
-			{
 				reversed = TRUE;
-			}
 			else
-			{
 				reversed = FALSE;			
-			}
+			
 		}
 		
 		  // Get input from user
@@ -119,10 +159,7 @@ int main( void )
 			rmSpeed = 65;
 			moving = FALSE;
 			reversed = FALSE;
-		
-			buf[0] = 'A';
-			buf[1] = 'A';	
-			buf[2] = '\0';
+			strcpy(buf, "AA");
 		}
 		else if(!moving)
 			stopped_keys(ch);
@@ -387,5 +424,36 @@ void build_string(void)
 
 }
 
+/*
 
+
+
+*/
+
+bool validIP(char *ip_add)
+{
+	unsigned b1, b2, b3, b4;
+	unsigned char c;
+
+	if (sscanf(ip_add, "%3u.%3u.%3u.%3u%c", &b1, &b2, &b3, &b4, &c) != 4)
+		return false;
+
+	if ((b1 | b2 | b3 | b4) > 255) 
+		return false;
 	
+	if (strspn(ip_add, "0123456789.") < strlen(ip_add)) 
+		return false;
+	
+	
+	//If it passed all that it is probably valid.
+	return true;
+}
+
+void error( char *message)
+{
+		printf("\nError: %s", message );
+		printf("\n\nUsage:\n\n ./client[.exe] [ip.add.re.ss] [port]" );
+		printf("\n\nIf no arguements are given, a default address and port are used");
+		printf("\nDefault address is %s. \nDefault port is %i.", IP_ADDRESS, PORT );
+	
+}

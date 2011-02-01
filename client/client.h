@@ -12,6 +12,8 @@
 
 #define PORT 1000 
 
+#define IP_ADDRESS "192.168.1.10"
+
 
 //A constant to distinguish between a forward and reverse motor command.
 
@@ -73,3 +75,23 @@ This function is designed to be called after the key press has been processed, i
 */
 void build_string(void);
 
+/*
+
+Simple function to determine if the IP address supplied as an arguement is a valid format.
+
+*/
+
+
+bool validIP( char *ip_add);
+
+
+/*
+
+Convenient method to report an error, and print usage
+*/
+
+
+void error( char *message);
+
+
+ 
