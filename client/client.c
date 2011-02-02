@@ -23,7 +23,7 @@
 
 #include "client.h"
 
-
+//roushstg3@yahoo.com
 
 //String that we send to the WiShield
 
@@ -76,7 +76,10 @@ int main( int argc, char *argv[])
 		error( "Invalid IP format.");
 		exit(3);
 	}
-	
+	else
+	{
+		strcpy( ip_address, argv[1]);
+	}
 	
 	if(argc == 3 )
 	{
@@ -84,6 +87,10 @@ int main( int argc, char *argv[])
 		{
 			error("Invalid port.");
 			exit(4);
+		}
+		else
+		{
+			port = atoi(argv[2]);
 		}
 	}
 
