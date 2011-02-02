@@ -104,7 +104,7 @@ int main( int argc, char *argv[])
 
 		// setup IP address of WiShield
 		srv.sin_family = AF_INET;
-		srv.sin_port = htons(PORT);
+		srv.sin_port = htons(port);
 
 
 		inet_pton(AF_INET, ip_address, &srv.sin_addr);
