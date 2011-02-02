@@ -242,23 +242,39 @@ int main( int argc, char *argv[])
 		}
  
 
- 		// Loop Until the escape key  or 'Q' is pressed.  
+ 		// Loop Until the 'Esc'  or 'Q' is pressed.  
 	} while(ch != 27 && ch != 'Q' );  
 
-		// Send one last string to stop the car.	  
+	/** 
+	After exiting, send one last "STOP" string to make sure you dont
+	break the connection with the car moving, which is funny, but not a
+	really good idea.
+	*/
+	
 	if (send(sockfd, "AA\0" , MAXDATASIZE, 0) == -1) 
 	{
-    perror("send");
-    close(sockfd);
-    exit(1);
-  }
+		perror("send");
+		close(sockfd);
+		exit(1);
+	}
 
 
-	//Tidy up.
+	//Close the connection and exit ncurses.
 	close(sockfd);
 	endwin();
   	return 0;
+
+
 }  //End of main.
+
+/*****************************************************************
+
+Each of the following function is pretty straightforward.
+They change the value of the buffer string based on user input, and 
+vehicle state.
+
+******************************************************************/
+
 
 
 
@@ -267,23 +283,45 @@ void stopped_keys(int keypress)
 	switch(keypress)
 	{
 		case KEY_UP:
+			
+			/**
+			Increase the speed of both left and right wheels
+			if the up key is pressed when the vehicle is stopped
+			*/
+			
 			reversed = FALSE;				
 			left_reversed = FALSE;
 			right_reversed = FALSE;	
-		
 			lmSpeed += STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;
 				
 		case KEY_DOWN:
+			
+			/**
+			Increment the speed of both left and right wheels, AND
+			change the flag for reverse.
+			
+			*/
+			
 			reversed = TRUE;				
 			left_reversed = TRUE;
 			right_reversed = TRUE;
+			
 			lmSpeed += STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;
 						
 		case KEY_LEFT:
+			/**
+			
+			Increase the speed of both left and right wheels, but 
+			only reverse the left one.
+			
+			this causes the vehicle to turn in place counterclockwise.
+			
+			*/
+			
 			reversed = FALSE;			
 			left_reversed = TRUE;
 			right_reversed = FALSE;
@@ -292,6 +330,14 @@ void stopped_keys(int keypress)
 			break;		
 		
 		case KEY_RIGHT:
+
+			/**
+			Increment the speed of both left and right wheels, but only
+			reverse the right one.
+			
+			this causes the vehicle to turn in place clockwise.
+			*/
+			
 			reversed = FALSE;			
 			left_reversed = FALSE;
 			left_reversed = TRUE;
@@ -301,6 +347,9 @@ void stopped_keys(int keypress)
 		
 	}
 	
+	/** Use the build string function to actually make the buffer string
+	that gets sent to the car.
+	*/
 	build_string();
 
 }
@@ -312,27 +361,56 @@ void reverse_keys(int keypress)
 	switch(keypress)
 	{
 		case KEY_UP:
+			/**
+			If the car is moving backwards, pressing up causes the car to slow down 
+			*/
+			
+			
 			lmSpeed -= STEPSIZE;
 			rmSpeed -= STEPSIZE;
 			break;
 				
 		case KEY_DOWN:
+			/**
+			When reveresed, the down key causes teh vehicle to accelerate backwards.
+			*/
 			lmSpeed += STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;
 						
 		case KEY_LEFT:
+			/**
+			In reverse, the left key causes the left motor to slow down, and the
+			right motor to speed up causing it to turn in an arc twards the left 
+			side of the vehicle.
+			*/
+			
+		
 			lmSpeed -= STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;		
 		
 		case KEY_RIGHT:
+			/**
+			In reverse the right key causes teh right motor to slow down, and
+			the left motor to speed up causing it to turn an arc twards
+			the right side of the vehicle.
+			*/
+		
 			lmSpeed += STEPSIZE;
 			rmSpeed -= STEPSIZE;
 			break;		
 		
 	}
 
+	
+	/**
+	All these checks just fix any problems we may have caused by stepping
+	over our bounds. This is very necessary if you changed the STEPSIZE
+	constant.
+	
+	*/
+	
 	if( lmSpeed <= 65)
 	{
 		reversed = FALSE;
@@ -352,7 +430,9 @@ void reverse_keys(int keypress)
 		rmSpeed = 90;
 	
 
-
+	/**
+	Use build_string to make the string to send to the car.
+	*/
 	build_string();
 
 	
@@ -367,26 +447,53 @@ void forward_keys(int keypress)
 	switch(keypress)
 	{
 		case KEY_UP:
+			/**
+			Up causes the car to accelerate if the car is already moving.
+			
+			*/
+			
 			lmSpeed += STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;
 				
 		case KEY_DOWN:
+			/**
+				
+			Down causes the car to slow down.
+			
+			*/
 			lmSpeed -= STEPSIZE;
 			rmSpeed -= STEPSIZE;
 			break;
 						
 		case KEY_LEFT:
+			/**
+			Left causes the left wheels to slow down, and the right wheels 
+			to speed up, causing the car to turn in an arc to the left.
+			*/
+		
 			lmSpeed -= STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;
 	
 		case KEY_RIGHT:
+			/**
+			The right arrow key causes the right wheel to slow down, and the 
+			left wheel to speed up causing the car to turn in an arc to the right.
+			*/
 			lmSpeed += STEPSIZE;
 			rmSpeed -= STEPSIZE;
 			break;		
 	}
 
+		/**
+	All these checks just fix any problems we may have caused by stepping
+	over our bounds. This is very necessary if you changed the STEPSIZE
+	constant.
+	
+	*/
+
+	
 	if( lmSpeed <= 65)
 		lmSpeed = 65;
 	if( rmSpeed <= 65)
@@ -398,7 +505,9 @@ void forward_keys(int keypress)
 		rmSpeed = 90;
 	
 
-	
+	/**
+	Use build_string to make the string to send to the car.
+	*/
 	build_string();
 
 
@@ -411,26 +520,55 @@ void opposite_direction_keys(int keypress)
 	switch(keypress)
 	{
 		case KEY_UP:
+			/**
+			If the car is turning in place, the up key makes it 
+			spin in place faster.
+			*/
 			lmSpeed += STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;
 				
 		case KEY_DOWN:
+			/**
+			If the car is turning in place, the down key makes it 
+			spin in place slower until it stops.
+			*/
+
+
 			lmSpeed -= STEPSIZE;
 			rmSpeed -= STEPSIZE;
 			break;
 						
 		case KEY_LEFT:
+			/**
+			I couldnt think of a good desired behavoir for this condition
+			so I decided to go with slowing down the left wheel, and speeding
+			up the right. I dont have a good reason for this.
+			
+			*/
+		
 			lmSpeed -= STEPSIZE;
 			rmSpeed += STEPSIZE;
 			break;		
 		
 		case KEY_RIGHT:
+			/**
+			I couldnt think of a good desired behavoir for this condition
+			for this either, so it is the opposite of above.
+			*/
+
 			lmSpeed += STEPSIZE;
 			rmSpeed -= STEPSIZE;
 			break;		
 		
 	}
+
+	/**
+	All these checks just fix any problems we may have caused by stepping
+	over our bounds. This is very necessary if you changed the STEPSIZE
+	constant.
+	
+	*/
 
 	if( lmSpeed <= 65)
 		lmSpeed = 65;
@@ -443,7 +581,11 @@ void opposite_direction_keys(int keypress)
 		rmSpeed = 90;
 	
 
-	
+
+	/**
+	Use build_string to make the string to send to the car.
+	*/
+
 	build_string();
 
 }
@@ -453,6 +595,7 @@ void build_string(void)
 {
 
 	//Build string to send.
+	
 	if(left_reversed)
 		buf[0] = lmSpeed + REVERSE;
 	else
@@ -474,14 +617,31 @@ void build_string(void)
 
 */
 
+
+
+
+/**
+
+	This is a simple function I found for validating an IP address.
+	I found it online in a forum.
+	
+
+*/
+
+
+
 bool validIP(char *ip_add)
 {
+	
 	unsigned b1, b2, b3, b4;
 	unsigned char c;
-
+	
+	
+	
 	if (sscanf(ip_add, "%3u.%3u.%3u.%3u%c", &b1, &b2, &b3, &b4, &c) != 4)
 		return false;
 
+		
 	if ((b1 | b2 | b3 | b4) > 255) 
 		return false;
 	
@@ -492,6 +652,11 @@ bool validIP(char *ip_add)
 	//If it passed all that it is probably valid.
 	return true;
 }
+
+/**
+This is just a function to print an error message and the correct
+usage if someone messes up the arguements.
+*/
 
 void error( char *message)
 {
