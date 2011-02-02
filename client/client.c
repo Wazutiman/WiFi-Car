@@ -55,15 +55,24 @@ int main( int argc, char *argv[])
 	*/
 	
 	char ip_address[16];
-	int port = PORT;
-	
-	
-	//	Set the standard IP address to the one defined in the header.
-	
-	strcpy(ip_address, IP_ADDRESS);
+	int port;
 
-	/* Make sure there are the correct number of arguements*/
 	
+
+	/**
+	If there are no arguements, use the default values for
+	IP address and port number.
+	*/
+	
+	if(argc == 1)
+	{
+		strcpy(ip_address, IP_ADDRESS);
+		port = PORT;
+	}
+	/** 
+	If there are more than 2 additional arguements, inform the user
+	that they are stupid, and exit.
+	*/
 	if( argc > 3)
 	{	
 		error( "Wrong number of arguements.");
@@ -71,21 +80,39 @@ int main( int argc, char *argv[])
 		exit (2);
 		
 	}
+	
+	/**
+	If there are arguements
+	Test the format of the IP address to ensure it is in the correct 
+	format.
+	*/
+		
 	if( argc > 1 && !validIP( argv[1])  )
 	{
+		/** 
+		Announce invalid IP address format, and exit.
+		*/
+		
 		error( "Invalid IP format.");
 		exit(3);
 	}
 	else
 	{
+		// If the IP address is valid, store it in the ip_address variable
+		
 		strcpy( ip_address, argv[1]);
 	}
+	
+	/**
+	If a 3rd arguement is present, check to make sure it could be a
+	valid port numnber, otherwise print usage, and exit.
+	*/
 	
 	if(argc == 3 )
 	{
 		if( atoi(argv[2]) > 65535  || atoi(argv[2]) <= 0 )
 		{
-			error("Invalid port.");
+			error("Invalid arguement for port.");
 			exit(4);
 		}
 		else
@@ -93,29 +120,37 @@ int main( int argc, char *argv[])
 			port = atoi(argv[2]);
 		}
 	}
-
-		// Variables used for socket.	
-		int ch;
-		int sockfd;
-		struct sockaddr_in srv;
+	else
+	{
+		port = PORT;
+	}
 		
 		
+		
+		
+		int ch;					//Variable used to store keyboard input
+		int sockfd;				//descriptor for socket
+		struct sockaddr_in srv; //Structure for socket address info
+		
+		
+		//Clear any stray info in the srv structure.
 		memset(&srv, 0, sizeof(srv));
 
-		// setup IP address of WiShield
+		// setup address type
 		srv.sin_family = AF_INET;
+		//convert port info to network byte order.
 		srv.sin_port = htons(port);
 
 
 		inet_pton(AF_INET, ip_address, &srv.sin_addr);
 
-    // setup socket and connect
+		// check socket, exit on error.
     	if ((sockfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP)) == -1) 
 		{
      	   perror("socket");
      	   exit(0);
     	}
-
+		// Attempt conenction, exit on failure.
     	if (connect(sockfd, (const void*)&srv, sizeof(srv)) == -1) 
 		{
         	close(sockfd);
@@ -134,8 +169,10 @@ int main( int argc, char *argv[])
 //Primary loop. ************************************************************
 	do
 	{
+		//Dont print keyboard input.
 		noecho();
 		
+		//Set simple flags for vehicle state.
 		if(lmSpeed == 65 && rmSpeed == 65)
 		{
 			reversed = FALSE;			
@@ -154,11 +191,13 @@ int main( int argc, char *argv[])
 			
 		}
 		
-		  // Get input from user
+		// Get input from user
 		ch = getch();
 		ch = toupper( ch );
 		
-			//Determine whick method to process the keys based on current state.
+		
+
+		//Determine whick method to process the keys based on current state.
 		
 		if (ch == ' ')	 // Check for a stop command first.
 		{
@@ -178,11 +217,17 @@ int main( int argc, char *argv[])
 			forward_keys(ch);
 
 
-			// Only send a string to the car if it is different than the last one sent.
+		/**
+			Only send a new update string to the car if it is different than the last
+			one that was sent. This reduces the chances of flooding the queue and 
+			causing delays in response.
+					
+		*/
+
 		if( strcmp(buf, lastSent))
 		{		
     
-				// Send user response
+				// Send user input.
 	    	if (send(sockfd, buf, MAXDATASIZE, 0) == -1) 
 			{
 	    	 	perror("send");
@@ -191,16 +236,8 @@ int main( int argc, char *argv[])
     		}
 			else
 			{
-
-/*
-I store a copy of the last sent string in a variable named lastSent. 
-before sending the next string I compare the new string to this.
-If they match, I skip sending the new one.
-I found this fixed some of the delay that resulted from key mashing that 
-people are inclined to do
-*/
+				//
 				memcpy(lastSent, buf, MAXDATASIZE);
-  			
 			}
 		}
  
